@@ -1,12 +1,11 @@
 [package]
-name = "stylus-hello-world"
-version = "0.1.5"
+name = "serc20"
+version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/OffchainLabs/stylus-hello-world"
-repository = "https://github.com/OffchainLabs/stylus-hello-world"
+repository = "https://github.com/S03XY/serc20"
 keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
-description = "Stylus hello world example"
+description = "ERC20 implementation for stylus"
 
 [dependencies]
 alloy-primitives = "0.3.1"

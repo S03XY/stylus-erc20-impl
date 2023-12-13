@@ -1,58 +1,42 @@
-//! Implements a hello-world example for Arbitrum Stylus, providing a Solidity ABI-equivalent
-//! Rust implementation of the Counter contract example provided by Foundry.
-//! Warning: this code is a template only and has not been audited.
-//! ```
-//! contract Counter {
-//!     uint256 public number;
-//!     function setNumber(uint256 newNumber) public {
-//!         number = newNumber;
-//!     }
-//!     function increment() public {
-//!         number++;
-//!     }
-//! }
-//! ```
+#![cfg_attr(not(feature = "export-abi"), no_main, no_std)]
 
-// Only run this as a WASM if the export-abi feature is not set.
-#![cfg_attr(not(feature = "export-abi"), no_main)]
-extern crate alloc;
-
-/// Initializes a custom, global allocator for Rust programs compiled to WASM.
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-/// Import the Stylus SDK along with alloy primitive types for use in our program.
-use stylus_sdk::{alloy_primitives::U256, prelude::*};
+extern crate alloc;
 
-// Define the entrypoint as a Solidity storage object, in this case a struct
-// called `Counter` with a single uint256 value called `number`. The sol_storage! macro
-// will generate Rust-equivalent structs with all fields mapped to Solidity-equivalent
-// storage slots and types.
-sol_storage! {
-    #[entrypoint]
-    pub struct Counter {
-        uint256 number;
-    }
+mod serc20;
+
+use alloy_primitives::{Address, U256};
+use serc20::{SERC20Details, SERC20Error, SERC20};
+use stylus_sdk::stylus_proc::{entrypoint, external, sol_storage};
+
+pub struct TestTokenDetails;
+
+impl SERC20Details for TestTokenDetails {
+    const NAME: &'static str = "Test Token";
+    const SYMBOL: &'static str = "TTS";
+    const DECIMALS: u8 = 18;
 }
 
-/// Define an implementation of the generated Counter struct, defining a set_number
-/// and increment method using the features of the Stylus SDK.
+sol_storage! {
+    #[entrypoint]
+    pub struct TestToken {
+        #[borrow]
+        SERC20<TestTokenDetails> test_token;
+    }
+
+}
+
 #[external]
-impl Counter {
-    /// Gets the number from storage.
-    pub fn number(&self) -> Result<U256, Vec<u8>> {
-        Ok(self.number.get())
+#[inherit(SERC20<TestTokenDetails>)]
+impl TestToken {
+    pub fn mint(&mut self, address: Address, value: U256) -> Result<bool, SERC20Error> {
+        self.test_token.mint(address, value);
+        Ok(true)
     }
-
-    /// Sets a number in storage to a user-specified value.
-    pub fn set_number(&mut self, new_number: U256) -> Result<(), Vec<u8>> {
-        self.number.set(new_number);
-        Ok(())
-    }
-
-    /// Increments number and updates it values in storage.
-    pub fn increment(&mut self) -> Result<(), Vec<u8>> {
-        let number = self.number.get();
-        self.set_number(number + U256::from(1))
+    pub fn burn(&mut self, address: Address, value: U256) -> Result<bool, SERC20Error> {
+        self.test_token.burn(address, value)?;
+        Ok(true)
     }
 }
